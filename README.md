@@ -8,7 +8,7 @@
 
 1. Download the commit metrics from this [link](https://github.com/harsh8398/apachejit/blob/14e29628584160037139a7d111fcfdfb593fa700/dataset/apachejit_total.csv) and put it in `/ecoselekt/data/` directory.
 
-2. Download the "ApacheJIT Commits" zip from the [releases](https://github.com/SAILResearch/wip-23-harsh-model_recycling/releases) and extract it in `/ecoselekt/data/` directory.
+2. Download the "ApacheJIT Commits" zip from the [releases](https://github.com/SAILResearch/replication-23-harsh-model_recycling/releases) and extract it in `/ecoselekt/data/` directory.
 
 3. Install dependencies:
 

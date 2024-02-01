@@ -1,5 +1,6 @@
 import math
 from pathlib import Path
+from typing import List
 
 from pydantic import BaseSettings
 
@@ -21,6 +22,20 @@ class Settings(BaseSettings):
     # wilcoxon test
     ALPHA: float = 0.05 / MODEL_HISTORY
 
+    # deepjit settings
+    MSG_LENGTH: int = 256
+    CODE_LENGTH: int = 512
+    CODE_LINE: int = 10
+    FILTER_SIZES: List[int] = [1, 2, 3]
+    NUM_FILTERS: int = 16
+    NUM_EPOCHS: int = 50
+    EMBEDDING_DIM: int = 16
+    DROP_OUT: float = 0.5
+    HIDDEN_UNITS: int = 512
+    BATCH_SIZE: int = 64
+    CLASS_NUM: int = 1
+    LR: float = 1e-5
+
     # apachejit
     PROJECTS = [
         "activemq",
@@ -35,7 +50,7 @@ class Settings(BaseSettings):
 
     # derived constants
     C_TEST_WINDOWS: int = math.ceil(TEST_SIZE / SHIFT)
-    F_TEST_WINDOWS: int = TEST_SIZE // SHIFT if TEST_SIZE > SHIFT else 1
+    F_TEST_WINDOWS: int = TEST_SIZE // SHIFT
 
 
 settings = Settings()

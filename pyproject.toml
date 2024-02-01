@@ -19,6 +19,11 @@ PyDriller = "^2.3"
 code-tokenize = "^0.2.0"
 xgboost = "^1.7.4"
 rpy2 = "^3.5.10"
+platformdirs = "^4.0.0"
+torch = "^2.1.1"
+torchvision = "^0.16.1"
+torchaudio = "^2.1.1"
+skorch = "^0.15.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -27,6 +32,7 @@ black = "^22.10.0"
 mypy = "^0.982"
 Cython = "^0.29.32"
 isort = "^5.10.1"
+ipykernel = "^6.28.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -42,7 +48,18 @@ inference_selekt = "ecoselekt.inference_selekt:main"
 eval_selekt = "ecoselekt.eval_selekt:main"
 process_selekt_vs_best = "ecoselekt.process_selekt_vs_best:main"
 stat_test = "ecoselekt.stat_test:main"
-inf_latency = "ecoselekt.inference_latency:main"
+train_nn = "ecoselekt.train_nn:main"
+eval_nn = "ecoselekt.eval_nn:main"
+train_lr = "ecoselekt.train_lr:main"
+check_lr = "ecoselekt.check_lr:main"
+eval_lr = "ecoselekt.eval_lr:main"
+train_selekt_lr = "ecoselekt.train_selekt_lr:main"
+inference_selekt_lr = "ecoselekt.inference_selekt_lr:main"
+eval_selekt_lr = "ecoselekt.eval_selekt_lr:main"
+prep_nn_data = "ecoselekt.prep_nn_data:main"
+train_selekt_nn = "ecoselekt.train_selekt_nn:main"
+inference_selekt_nn = "ecoselekt.inference_selekt_nn:main"
+eval_selekt_nn = "ecoselekt.eval_selekt_nn:main"
 
 [tool.black]
 line-length = 100

@@ -60,6 +60,7 @@ prep_nn_data = "ecoselekt.prep_nn_data:main"
 train_selekt_nn = "ecoselekt.train_selekt_nn:main"
 inference_selekt_nn = "ecoselekt.inference_selekt_nn:main"
 eval_selekt_nn = "ecoselekt.eval_selekt_nn:main"
+inf_latency = "ecoselekt.inference_latency:main"
 
 [tool.black]
 line-length = 100

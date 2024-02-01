@@ -5,12 +5,15 @@
 ## Results
 
 - RQ1 – The results for RQ1 are available under `/rq1.ipynb` notebook [here](https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/rq1).
-- RQ2 – To look at the analysis of all variant results, please refer to `/analysis.ipynb` notebook.
+- RQ2 – To look at the analysis of all variant results, please refer to the following notebooks
+  - `/analysis.ipynb` notebook for random forest variants
+  - `/analysis-lr.ipynb` notebook for logistic regression variants
+  - `/analysis-nn.ipynb` notebook for deep neural network variants
 - RQ3 - For latency evaluation of best variants, please refer to `/latency.ipynb` notebook under their branch listed in [variants](#variants) table.
 
 ## Variants
 
-The results for each project are available in `/experiment-apache-<<project_name_here>>.ipynb` notebook under each recycling strategy variant, which resides in its independent branch as listed below.
+The source code to replicate the results for each project under each recycling strategy variant is available in its independent branch as listed below.
 
 | **Strategy**       | **# Variant** | **Link to Variant Branch**                                                          |
 | ------------------ | ------------- | ----------------------------------------------------------------------------------- |
@@ -46,7 +49,7 @@ The results for each project are available in `/experiment-apache-<<project_name
 
 ## Extra Variants
 
-The variants with different window size and shift size are listed below.
+The variants with different window sizes and shift sizes are listed below.
 
 | **Strategy**       | **# Variant** | **Link to Variant Branch**                                                          |
 | ------------------ | ------------- | ----------------------------------------------------------------------------------- |
@@ -85,13 +88,23 @@ poetry install
 5. Create time windows and train RFS model versions:
 
 ```shellscript
+# train random forest models
 make mlms
+# train logistic regression models
+make lr
+# train neural network models
+make nn
 ```
 
 6. Evaluate RFS models and create a baseline:
 
 ```shellscript
-make eval_mlms
+# evaluate random forest models
+poetry run eval_models
+# evaluate logistic regression models
+poetry run eval_lr
+# evaluate neural network models
+poetry run eval_nn
 ```
 
 7. [Required only for Model Stacking and Model Voting variants] Install ScottKnottESD R package
@@ -103,25 +116,45 @@ poetry run setup_r
 8. Prepare for recycling:
 
 ```shellscript
+# prepare for random forest models
 make prep_reuse
+# prepare for logistic regression models
+make prep_reuse_lr
+# prepare for neural network models
+make prep_reuse_nn
 ```
 
 [Optional] – To evaluate inference latency results (script only present under the best experiments branches):
 
 ```shellscript
+# for rf
 poetry run inf_latency
+# for lr
+poetry run inf_latency_lr
+# for nn
+poetry run inf_latency_nn
 ```
 
 9. Inference with recycling:
 
 ```shellscript
+# for rf
 make inf_reuse
+# for lr
+make inf_reuse_lr
+# for nn
+make inf_reuse_nn
 ```
 
 10. Evaluate recycling:
 
 ```shellscript
+# for rf
 make eval_reuse
+# for lr
+make eval_reuse_lr
+# for nn
+make eval_reuse_nn
 ```
 
 11. Evaluate historical models over time windows:

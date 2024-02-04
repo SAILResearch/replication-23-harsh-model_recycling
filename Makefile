@@ -1,17 +1,29 @@
 mlms: pyproject.toml
 	caffeinate poetry run train_models
 
+lr: pyproject.toml
+	caffeinate poetry run train_lr
+
 eval_mlms: pyproject.toml
 	caffeinate poetry run eval_models
 
 prep_reuse: pyproject.toml
 	caffeinate poetry run train_selekt
 
+prep_reuse_lr: pyproject.toml
+	caffeinate poetry run train_selekt_lr
+
 eval_reuse: pyproject.toml
 	caffeinate poetry run eval_selekt
 
+eval_reuse_lr: pyproject.toml
+	caffeinate poetry run eval_selekt_lr
+
 inf_reuse: pyproject.toml
 	caffeinate poetry run inference_selekt
+
+inf_reuse_lr: pyproject.toml
+	caffeinate poetry run inference_selekt_lr
 
 copy: pyproject.toml
 	cp -r ecoselekt/data/apch_activemq_*.csv results/exp_apch && \

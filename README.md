@@ -1,6 +1,6 @@
 # Model Recycling
 
-*Abstract* – Once a Machine Learning (ML) model is deployed, the same model is typically retrained from scratch, either on a scheduled interval or as soon as model drift is detected, to make sure the model reflects current data distributions and performance experiments. As such, once a new model is available, the old model typically is discarded. This paper challenges the notion of older models being useless by showing that old models still have substantial value compared to newly trained models, and by proposing novel post-deployment model recycling techniques that help make informed decisions on which old models to reuse and when to reuse. In an empirical study on eight long-lived Apache projects comprising a total of 84,343 commits, we analyze the performance of five model recycling strategies on Just-In-Time defect prediction models. Comparison against traditional model retraining from scratch (RFS) shows that our approach significantly outperforms RFS in terms of recall, g-mean and AUC by up to a median of $26\%$, $21\%$ and $1\%$, respectively, with the best recycling strategy (Model Stacking) outperforming the baseline in over $50\%$ of the projects. Our recycling strategies provide this performance improvement at the cost of a median of $2$x to $6$-$10$x slower time-to-inference compared to RFS, depending on the selected strategy and variant.
+*Abstract* – Once a Machine Learning (ML) model is deployed, the same model is typically retrained from scratch, either on a scheduled interval or as soon as model drift is detected, to make sure the model reflects current data distributions and performance experiments. As such, once a new model is available, the old model typically is discarded. This paper challenges the notion of older models being useless by showing that old models still have substantial value compared to newly trained models, and by proposing novel post-deployment model recycling techniques that help make informed decisions on which old models to reuse and when to reuse. In an empirical study on eight long-lived Apache projects comprising a total of 84,343 commits, we analyze the performance of five model recycling strategies on three different types of Just-In-Time defect prediction models (Random Forest (RF), Logistic Regression (LR) and Neural Network (NN)). Comparison against traditional model retraining from scratch (RFS) shows that our approach significantly outperforms RFS in terms of recall, g-mean, AUC and F1 by up to a median of $30\%$, $20\%$, $11\%$ and $10\%$, respectively, with the best recycling strategy (Model Stacking) outperforming the baseline in over $50\%$ of the projects. Our recycling strategies provide this performance improvement at the cost of a median of $2$x to $6$-$17$x slower time-to-inference compared to RFS, depending on the selected strategy and variant.
 
 ## Results
 
@@ -51,16 +51,16 @@ The source code to replicate the results for each project under each recycling s
 
 The variants with different window sizes and shift sizes are listed below.
 
-| **Strategy**       | **# Variant** | **Link to Variant Branch**                                                          |
-| ------------------ | ------------- | ----------------------------------------------------------------------------------- |
-| Model Selection    | w=2000        | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/ms-exp6w  |
-|                    | s=300         | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/ms-exp6s  |
-| Single Model Reuse | w=2000        | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/mr-exp2w  |
-|                    | s=300         | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/mr-exp2s  |
-| Model Stacking     | w=2000        | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/mst-exp5w |
-|                    | s=300         | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/mst-exp5s |
-| Model Voting       | w=2000        | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/mv-exp1w  |
-|                    | s=300         | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/mv-exp1s  |
+| **Strategy**       | **# Variant** | **Link to Variant Branch**                                                           |
+| ------------------ | ------------- | ------------------------------------------------------------------------------------ |
+| Model Selection    | w=2000        | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/ms-window  |
+|                    | s=300         | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/ms-shift   |
+| Single Model Reuse | w=2000        | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/mr-window  |
+|                    | s=300         | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/mr-shift   |
+| Model Stacking     | w=2000        | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/mst-window |
+|                    | s=300         | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/mst-shift  |
+| Model Voting       | w=2000        | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/mv-window  |
+|                    | s=300         | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/mv-shift   |
 
 ## How to Run Experiment
 
@@ -70,7 +70,7 @@ The variants with different window sizes and shift sizes are listed below.
 - [Poetry](https://python-poetry.org/)
 ### Steps
 
-1. Checkout the variant branch:
+1. Check out the variant branch:
 
 ```shellscript
 git checkout <<branch_name_here>>

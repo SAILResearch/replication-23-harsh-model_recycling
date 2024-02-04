@@ -30,16 +30,12 @@ class Settings(BaseSettings):
         "ms-exp4",
         "ms-exp5",
         "ms-exp6",
-        "ms-exp6w",
-        "ms-exp6s",
         "ms-exp7",
         "ms-exp8",
     ]
     MODEL_REUSE_EXPERIMENTS: list = [
         "mr-exp1",
         "mr-exp2",
-        "mr-exp2w",
-        "mr-exp2s",
         "mr-exp3",
         "mr-exp4",
     ]
@@ -49,8 +45,6 @@ class Settings(BaseSettings):
         "mst-exp3",
         "mst-exp4",
         "mst-exp5",
-        "mst-exp5w",
-        "mst-exp5s",
         "mst-exp6",
         "mst-exp7",
         "mst-exp8",
@@ -60,8 +54,6 @@ class Settings(BaseSettings):
     ]
     MODEL_VOTING_EXPERIMENTS: list = [
         "mv-exp1",
-        "mv-exp1w",
-        "mv-exp1s",
         "mv-exp2",
         "mv-exp3",
         "mv-exp4",
@@ -77,6 +69,31 @@ class Settings(BaseSettings):
         + MODEL_VOTING_EXPERIMENTS
         + CLUSTERING_EXPERIMENTS
     )
+
+    RF_EXTRA_EXPERIMENTS: list = [
+        "mst-window",
+        "mst-shift",
+        "mr-window",
+        "mr-shift",
+        "mv-window",
+        "mv-shift",
+        "ms-window",
+        "ms-shift",
+    ]
+
+    LR_EXTRA_EXPERIMENTS: list = [
+        "mst-window",
+        "mst-shift",
+        "mv-window",
+        "mv-shift",
+        "ms-window",
+        "ms-shift",
+    ]
+
+    NN_EXTRA_EXPERIMENTS: list = [
+        "mst-window",
+        "mst-shift",
+    ]
 
 
 settings = Settings()

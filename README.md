@@ -62,6 +62,8 @@ The variants with different window sizes and shift sizes are listed below.
 | Model Voting       | w=2000        | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/mv-window  |
 |                    | s=300         | https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/mv-shift   |
 
+The additional experiment of DeepJIT using commit messages is available under the branch [deepjit-commit-messages](https://github.com/SAILResearch/replication-23-harsh-model_recycling/tree/deepjit-commit-messages) with results available in `results.zip` attached under the [releases](https://github.com/SAILResearch/replication-23-harsh-model_recycling/releases).
+
 ## How to Run Experiment
 
 ### Pre-requisites

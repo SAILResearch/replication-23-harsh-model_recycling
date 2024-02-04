@@ -36,19 +36,19 @@ def calc_drift(project_name="activemq"):
     shap_max_df = pd.DataFrame(columns=["project", "window", *all_features])
 
     # ignore last few windows (`settings.TEST_SIZE`) since there is no test data if we use it
-    for i in range(len(windows) - settings.C_TEST_WINDOWS):
+    for i in range(len(windows) - (2 * settings.C_TEST_WINDOWS)):
         _LOGGER.info(f"Starting window {i} for {project_name}")
         # randomly shuffle the window to get random validation set
         # get test data from further windows as per `settings.TEST_SIZE`
         split = pd.concat(
-            [windows[j][-settings.SHIFT :] for j in range(i + 1, i + 1 + settings.F_TEST_WINDOWS)],
+            [windows[j][-settings.SHIFT :] for j in range(i + 2, i + 2 + settings.F_TEST_WINDOWS)],
             ignore_index=True,
         )
         if settings.TEST_SIZE % settings.SHIFT != 0:
             split = pd.concat(
                 [
                     split,
-                    windows[i + 1 + settings.F_TEST_WINDOWS][
+                    windows[i + 2 + settings.F_TEST_WINDOWS][
                         -settings.SHIFT : (settings.TEST_SIZE % settings.SHIFT) - settings.SHIFT
                     ],
                 ],

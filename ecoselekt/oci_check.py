@@ -22,7 +22,7 @@ def drift_check(project_name="activemq"):
         RESULTS_DIR / f"{settings.EXP_ID}_{project_name}_best_model_per_test_split.csv"
     )
     bestmodel_df.drop(columns=["Unnamed: 0"], inplace=True)
-    bestmodel_df = bestmodel_df[bestmodel_df["test_split"] == bestmodel_df["window"] + 1]
+    bestmodel_df = bestmodel_df[bestmodel_df["test_split"] == bestmodel_df["window"] + 2]
 
     # find winning windows for each reused model version
     reused_model_versions = {}
@@ -77,7 +77,7 @@ def drift_check(project_name="activemq"):
         split_x = pd.concat(
             [
                 windows_data[x][-settings.SHIFT :]
-                for x in range(i + 1, i + 1 + settings.F_TEST_WINDOWS)
+                for x in range(i + 2, i + 2 + settings.F_TEST_WINDOWS)
             ],
             ignore_index=True,
         )
@@ -85,7 +85,7 @@ def drift_check(project_name="activemq"):
             split_x = pd.concat(
                 [
                     split_x,
-                    windows_data[i + 1 + settings.F_TEST_WINDOWS][
+                    windows_data[i + 2 + settings.F_TEST_WINDOWS][
                         -settings.SHIFT : (settings.TEST_SIZE % settings.SHIFT) - settings.SHIFT
                     ],
                 ],
@@ -134,7 +134,7 @@ def drift_check(project_name="activemq"):
             split_y = pd.concat(
                 [
                     windows_data[y][-settings.SHIFT :]
-                    for y in range(j + 1, j + 1 + settings.F_TEST_WINDOWS)
+                    for y in range(j + 2, j + 2 + settings.F_TEST_WINDOWS)
                 ],
                 ignore_index=True,
             )
@@ -142,7 +142,7 @@ def drift_check(project_name="activemq"):
                 split_y = pd.concat(
                     [
                         split_y,
-                        windows_data[j + 1 + settings.F_TEST_WINDOWS][
+                        windows_data[j + 2 + settings.F_TEST_WINDOWS][
                             -settings.SHIFT : (settings.TEST_SIZE % settings.SHIFT) - settings.SHIFT
                         ],
                     ],

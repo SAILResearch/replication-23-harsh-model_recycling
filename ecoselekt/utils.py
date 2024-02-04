@@ -3,7 +3,6 @@ import re
 from pathlib import Path
 
 import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
 
 import ecoselekt.consts as consts
 
@@ -87,7 +86,6 @@ def _load_data(data):
 
 
 def prep_train_data(project_name):
-
     train_data = pickle.load(open(DATA_DIR / f"{project_name}_train.pkl", "rb"))
 
     # project_dict = pickle.load(open(DATA_DIR / f"{project_name}_dict.pkl", "rb"))[1]
@@ -144,13 +142,3 @@ def get_sliding_windows(df, window_size=1000, shift=200):
     for i in range(0, ((df.shape[0] - window_size) // shift) + 1):
         windows.append(df.iloc[i * shift : i * shift + window_size])
     return windows
-
-
-class Debug(BaseEstimator, TransformerMixin):
-    def transform(self, X):
-        print(X[0])
-        print(X.shape)
-        return X
-
-    def fit(self, X, y=None, **fit_params):
-        return self

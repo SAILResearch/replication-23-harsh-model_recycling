@@ -1,3 +1,4 @@
+import gc
 import math
 import pickle
 import random
@@ -6,8 +7,11 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
 
 import ecoselekt.consts as consts
+import ecoselekt.dnn.cc2vec_utils as cc2vec_utils
+import ecoselekt.dnn.deepjit_utils as deepjit_utils
 from ecoselekt.log_util import get_logger
 from ecoselekt.settings import settings
 
@@ -21,6 +25,7 @@ _LOGGER = get_logger()
 def _load_data(data):
     commit_id = data[0]
     label = data[1]
+    message = data[2]
     all_code_change = data[3]
 
     def _preprocess_code_line(code_line):
@@ -91,7 +96,7 @@ def _load_data(data):
         for added_code, removed_code in zip(all_added_code, all_removed_code)
     ]
 
-    return combined_code, commit_id, label
+    return combined_code, commit_id, label, message
 
 
 def prep_train_data(project_name):
@@ -238,13 +243,15 @@ def mini_batches_DExtended(X_ftr, X_msg, X_code, Y, mini_batch_size=64, seed=set
     return mini_batches
 
 
-def mini_batches_update_DExtended(X_ftr, X_code, Y, mini_batch_size=64, seed=settings.RANDOM_SEED):
+def mini_batches_update_DExtended(
+    X_ftr, X_msg, X_code, Y, mini_batch_size=64, seed=settings.RANDOM_SEED
+):
     m = X_ftr.shape[0]  # number of training examples
     mini_batches = list()
     np.random.seed(seed)
 
     # Step 1: No shuffle (X, Y)
-    shuffled_X_ftr, shuffled_X_code, shuffled_Y = X_ftr, X_code, Y
+    shuffled_X_ftr, shuffled_X_msg, shuffled_X_code, shuffled_Y = X_ftr, X_msg, X_code, Y
     Y = Y.tolist()
     Y_pos = [i for i in range(len(Y)) if Y[i] == 1]
     Y_neg = [i for i in range(len(Y)) if Y[i] == 0]
@@ -264,7 +271,8 @@ def mini_batches_update_DExtended(X_ftr, X_code, Y, mini_batch_size=64, seed=set
         )
         mini_batch_X_ftr = shuffled_X_ftr[indexes]
         mini_batch_X_code = shuffled_X_code[indexes]
+        mini_batch_X_msg = shuffled_X_msg[indexes]
         mini_batch_Y = shuffled_Y[indexes]
-        mini_batch = (mini_batch_X_ftr, mini_batch_X_code, mini_batch_Y)
+        mini_batch = (mini_batch_X_ftr, mini_batch_X_msg, mini_batch_X_code, mini_batch_Y)
         mini_batches.append(mini_batch)
     return mini_batches

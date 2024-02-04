@@ -20,9 +20,10 @@ torch.manual_seed(settings.RANDOM_SEED)
 
 
 class DeepJITExtended(nn.Module):
-    def __init__(self, vocab_code):
+    def __init__(self, vocab_msg, vocab_code):
         super(DeepJITExtended, self).__init__()
 
+        V_msg = vocab_msg
         V_code = vocab_code
         Dim = settings.EMBEDDING_DIM
         Class = settings.CLASS_NUM
@@ -30,6 +31,10 @@ class DeepJITExtended(nn.Module):
         Ci = 1  # input of convolutional layer
         Co = settings.NUM_FILTERS  # output of convolutional layer
         Ks = settings.FILTER_SIZES  # kernel sizes
+
+        # CNN-2D for commit message
+        self.embed_msg = nn.Embedding(V_msg, Dim)
+        self.convs_msg = nn.ModuleList([nn.Conv2d(Ci, Co, (K, Dim)) for K in Ks])
 
         # CNN-2D for commit code
         self.embed_code = nn.Embedding(V_code, Dim)
@@ -39,7 +44,7 @@ class DeepJITExtended(nn.Module):
         # other information
         self.dropout = nn.Dropout(settings.DROP_OUT)
         # commits metrics are added to the code representation with 12 features
-        self.fc1 = nn.Linear((len(Ks) * Co) + 12, settings.HIDDEN_UNITS)  # hidden units
+        self.fc1 = nn.Linear((2 * len(Ks) * Co) + 12, settings.HIDDEN_UNITS)  # hidden units
         self.fc2 = nn.Linear(settings.HIDDEN_UNITS, Class)
         self.sigmoid = nn.Sigmoid()
 
@@ -63,11 +68,14 @@ class DeepJITExtended(nn.Module):
         x = self.forward_msg(x=x, convs=convs_hunks)
         return x
 
-    def forward(self, x_metrics, x_code):
+    def forward(self, x_metrics, x_msg, x_code):
+        x_msg = self.embed_msg(x_msg)
+        x_msg = self.forward_msg(x_msg, self.convs_msg)
+
         x_code = self.embed_code(x_code)
         x_code = self.forward_code(x_code, self.convs_code_line, self.convs_code_file)
 
-        x_commit = torch.cat((x_metrics, x_code), 1)
+        x_commit = torch.cat((x_metrics, x_msg, x_code), 1)
         x_commit = self.dropout(x_commit)
         out = self.fc1(x_commit)
         out = F.relu(out)

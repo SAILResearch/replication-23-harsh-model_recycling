@@ -135,3 +135,25 @@ def optim_padding_code(project_name, i, data, dict_code):
             ]
         )
     return np.array(pad_code)
+
+
+def optim_padding_msg(project_name, i, data, dict_msg):
+    # optimized version of padding_data for msg
+    max_length = settings.MSG_LENGTH
+    pad_msg = []
+    for msg in tqdm(data, desc="Processing messages"):
+        line_length = len(msg.split())
+        if line_length < max_length:
+            msg += " <NULL>" * (max_length - line_length)
+        elif line_length > max_length:
+            msg = " ".join(msg.split()[:max_length])
+        pad_msg.append(msg.strip())
+
+    # Convert words to indices using the dictionary
+    pad_msg = np.array(
+        [
+            np.array([dict_msg.get(w.lower(), dict_msg["<NULL>"]) for w in line.split()])
+            for line in pad_msg
+        ]
+    )
+    return pad_msg

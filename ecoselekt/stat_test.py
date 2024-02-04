@@ -1,6 +1,7 @@
 import time
 
 import pandas as pd
+from cliffs_delta import cliffs_delta
 from scipy.stats import wilcoxon
 
 from ecoselekt.log_util import get_logger
@@ -12,32 +13,42 @@ _LOGGER = get_logger()
 def calc_wilcoxon(project_name="activemq"):
     # load baseline evaluation results
     base_eval_df = pd.read_csv(
-        settings.DATA_DIR / f"{settings.EXP_ID}_{project_name}_base_eval.csv"
+        settings.DATA_DIR / f"{settings.EXP_ID}_{project_name}_base_eval_nn.csv"
     )
     base_eval_df["model"] = "base"
 
     # load ecoselekt evaluation results
-    selekt_eval_df = pd.read_csv(
-        settings.DATA_DIR / f"{settings.EXP_ID}_{project_name}_selekt_eval.csv"
+    base_eval_all_df = pd.read_csv(
+        settings.DATA_DIR / f"{settings.EXP_ID}_{project_name}_base_eval_nn_all.csv"
     )
-    selekt_eval_df["model"] = "recycled"
+    base_eval_all_df["model"] = "all"
 
     eval_df = pd.concat(
-        [base_eval_df[base_eval_df["window"] >= settings.MODEL_HISTORY], selekt_eval_df]
+        [base_eval_df, base_eval_all_df],
     )
-    eval_df = eval_df[eval_df["window"] == eval_df["test_split"] - 1]
 
     p_values = []
     # calculate wilcoxon
     for metric in ["precision", "recall", "f1", "auc", "gmean", "ap", "specifi"]:
         try:
             _, p = wilcoxon(
-                eval_df[eval_df["model"] == "recycled"][metric],
+                eval_df[eval_df["model"] == "all"][metric],
                 eval_df[eval_df["model"] == "base"][metric],
             )
+            d, res = cliffs_delta(
+                eval_df[eval_df["model"] == "all"][metric],
+                eval_df[eval_df["model"] == "base"][metric],
+            )
+            avg_all = eval_df[eval_df["model"] == "all"][metric].mean()
+            avg_base = eval_df[eval_df["model"] == "base"][metric].mean()
+            avg_diff = avg_all - avg_base
         except ValueError:
             p = 1.0
-        _LOGGER.info(f"{project_name} {metric} p-value: {p}")
+
+        is_significant = p < 0.05
+        _LOGGER.info(
+            f"{project_name} {metric} p-value: {p} significant: {is_significant} diff: {avg_diff} res: {res}"
+        )
         p_values.append(p)
 
     return p_values
@@ -79,6 +90,6 @@ def main():
             )
             _LOGGER.info(f"Finished {project_name} in {time.time() - start}")
 
-        stats_df.to_csv(settings.DATA_DIR / f"{settings.EXP_ID}_stats.csv", index=False)
+        stats_df.to_csv(settings.DATA_DIR / f"{settings.EXP_ID}_stats_nn_all.csv", index=False)
     except Exception:
         _LOGGER.exception("Unexpected error occurred.")

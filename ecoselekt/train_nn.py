@@ -16,15 +16,17 @@ from tqdm import tqdm
 
 import ecoselekt.utils as utils
 from ecoselekt.dnn.deepjit import DeepJITExtended
-from ecoselekt.dnn.deepjit_utils import optim_padding_code
+from ecoselekt.dnn.deepjit_utils import optim_padding_code, optim_padding_msg
 from ecoselekt.log_util import get_logger
 from ecoselekt.settings import settings
 
 _LOGGER = get_logger()
 
 
-def get_combined_df(code_commit, commit_id, label, metrics_df):
-    code_df = pd.DataFrame({"code": code_commit, "commit_id": commit_id, "label": label})
+def get_combined_df(code_commit, message, commit_id, label, metrics_df):
+    code_df = pd.DataFrame(
+        {"code": code_commit, "commit_id": commit_id, "label": label, "message": message}
+    )
 
     code_df = code_df.sort_values(by="commit_id")
 
@@ -32,7 +34,7 @@ def get_combined_df(code_commit, commit_id, label, metrics_df):
     # !: project is needed to be removed only for apachejit data
     metrics_df = metrics_df.drop(["commit_id", "project", "author_date"], axis=1)
 
-    final_features = pd.concat([code_df["code"], metrics_df], axis=1)
+    final_features = pd.concat([code_df["code"], code_df["message"], metrics_df], axis=1)
 
     return final_features, np.array(code_df["commit_id"]), np.array(code_df["label"])
 
@@ -41,11 +43,7 @@ def save_model_ckpts(project_name="activemq"):
     _LOGGER.info(f"Starting checkpoint model training for {project_name}")
     start = time.time()
     # get test train code changes
-    (
-        all_code,
-        all_commit,
-        all_label,
-    ) = utils.prep_apachejit_data(project_name)
+    (all_code, all_commit, all_label, all_message) = utils.prep_apachejit_data(project_name)
     _LOGGER.info(f"Loaded code changes in {time.time() - start}")
 
     # get commit metrics
@@ -68,6 +66,7 @@ def save_model_ckpts(project_name="activemq"):
             "commit_id": all_commit,
             "code": all_code,
             "label": all_label,
+            "message": all_message,
         }
     )
 
@@ -99,9 +98,10 @@ def save_model_ckpts(project_name="activemq"):
 
         train_feature, train_commit_id, train_label = get_combined_df(
             split.code,
+            split.message,
             split.commit_id,
             split.label,
-            split.drop(["code", "label"], axis=1),
+            split.drop(["code", "label", "message"], axis=1),
         )
         _LOGGER.info(f"Train feature shape: {train_feature.shape}")
 
@@ -113,7 +113,7 @@ def save_model_ckpts(project_name="activemq"):
 
         # z-score normalization
         scaler = StandardScaler()
-        scaler.fit(final_train_feature.drop(["code"], axis=1).values)
+        scaler.fit(final_train_feature.drop(["code", "message"], axis=1).values)
         # *[OUT]: save scaler
         pickle.dump(scaler, open(settings.DATA_DIR / f"{project_name}_w{i}_scaler.pkl", "wb"))
 
@@ -126,9 +126,10 @@ def save_model_ckpts(project_name="activemq"):
         # get full features using the feature selector
         full_feature, full_commit_id, full_test_label = get_combined_df(
             full_split.code,
+            full_split.message,
             full_split.commit_id,
             full_split.label,
-            full_split.drop(["code", "label"], axis=1),
+            full_split.drop(["code", "label", "message"], axis=1),
         )
 
         _LOGGER.info(f"Completed loading data for window {i} in {time.time() - start}")
@@ -145,9 +146,21 @@ def save_model_ckpts(project_name="activemq"):
 
         valid_pad_code = optim_padding_code(project_name, i, valid_feature.code, dict_code)
 
+        # prepare vocabulary for message and save it for use in transformer
+        msg_vectorizer = CountVectorizer(min_df=3, ngram_range=(1, 1))
+        msg_vectorizer.fit(final_train_feature.message)
+        dict_msg = msg_vectorizer.vocabulary_
+        dict_msg["<NULL>"] = len(dict_msg)
+        # *[OUT]: save dict_msg
+        pickle.dump(dict_msg, open(settings.DATA_DIR / f"{project_name}_w{i}_dict_msg.pkl", "wb"))
+
+        final_pad_msg = optim_padding_msg(project_name, i, final_train_feature.message, dict_msg)
+
+        valid_pad_msg = optim_padding_msg(project_name, i, valid_feature.message, dict_msg)
+
         # create and train the defect model
         start = time.time()
-        model = DeepJITExtended(vocab_code=len(dict_code))
+        model = DeepJITExtended(vocab_msg=len(dict_msg), vocab_code=len(dict_code))
         optimizer = torch.optim.Adam(model.parameters(), lr=settings.LR)
 
         criterion = nn.BCELoss()
@@ -155,22 +168,26 @@ def save_model_ckpts(project_name="activemq"):
             total_loss = 0
             # building batches for training model
             batches = utils.mini_batches_update_DExtended(
-                X_ftr=scaler.transform(final_train_feature.drop(["code"], axis=1).values),
+                X_ftr=scaler.transform(
+                    final_train_feature.drop(["code", "message"], axis=1).values
+                ),
+                X_msg=final_pad_msg,
                 X_code=final_pad_code,
                 Y=final_train_label,
                 mini_batch_size=settings.BATCH_SIZE,
             )
             model.train()
             for bi, (batch) in enumerate(tqdm(batches)):
-                X, X_code, labels = batch
-                X, X_code, labels = (
+                X, X_msg, X_code, labels = batch
+                X, X_msg, X_code, labels = (
                     torch.tensor(X).float(),
+                    torch.tensor(X_msg).long(),
                     torch.tensor(X_code).long(),
                     torch.tensor(labels).float(),
                 )
 
                 optimizer.zero_grad()
-                predict = model.forward(X, X_code)
+                predict = model.forward(X, X_msg, X_code)
                 loss = criterion(predict, labels)
                 total_loss += loss
                 loss.backward()
@@ -179,7 +196,10 @@ def save_model_ckpts(project_name="activemq"):
             # calculate validation loss
             model.eval()
             predict = model.forward(
-                torch.tensor(scaler.transform(valid_feature.drop(["code"], axis=1).values)).float(),
+                torch.tensor(
+                    scaler.transform(valid_feature.drop(["code", "message"], axis=1).values)
+                ).float(),
+                torch.tensor(valid_pad_msg).long(),
                 torch.tensor(valid_pad_code).long(),
             )
             loss = criterion(predict, torch.tensor(valid_label).float())
@@ -204,7 +224,10 @@ def save_model_ckpts(project_name="activemq"):
         # calculate validation loss
         with torch.no_grad():
             predict = model.forward(
-                torch.tensor(scaler.transform(valid_feature.drop(["code"], axis=1).values)).float(),
+                torch.tensor(
+                    scaler.transform(valid_feature.drop(["code", "message"], axis=1).values)
+                ).float(),
+                torch.tensor(valid_pad_msg).long(),
                 torch.tensor(valid_pad_code).long(),
             )
             loss = criterion(predict, torch.tensor(valid_label).float())
@@ -217,12 +240,16 @@ def save_model_ckpts(project_name="activemq"):
         _LOGGER.info(f"fit model finish for window {i} in {time.time() - start}")
 
         full_pad_code = optim_padding_code(project_name, i, full_feature.code, dict_code)
+        full_pad_msg = optim_padding_msg(project_name, i, full_feature.message, dict_msg)
         _LOGGER.info(f"Shape of full_pad_code: {full_pad_code.shape}")
 
         with torch.no_grad():
             # evaluate on full dataset and later filter for training ecoselekt based on window
             full_predict = model.forward(
-                torch.tensor(scaler.transform(full_feature.drop(["code"], axis=1).values)).float(),
+                torch.tensor(
+                    scaler.transform(full_feature.drop(["code", "message"], axis=1).values)
+                ).float(),
+                torch.tensor(full_pad_msg).long(),
                 torch.tensor(full_pad_code).long(),
             )
             prob = full_predict.detach().numpy()
@@ -250,14 +277,14 @@ def save_model_ckpts(project_name="activemq"):
         )
 
         pred_results_df.to_csv(
-            settings.DATA_DIR / (f"{settings.EXP_ID}_{project_name}_pred_result_nn.csv"),
+            settings.DATA_DIR / (f"{settings.EXP_ID}_{project_name}_pred_result_nn_all.csv"),
             index=False,
         )
 
         # *[OUT]: save model
         torch.save(
             model.state_dict(),
-            settings.MODELS_DIR / f"{settings.EXP_ID}_{project_name}_w{i}_model_nn.pt",
+            settings.MODELS_DIR / f"{settings.EXP_ID}_{project_name}_w{i}_model_nn_all.pt",
         )
         _LOGGER.info(f"Finished window {i} for {project_name}")
 

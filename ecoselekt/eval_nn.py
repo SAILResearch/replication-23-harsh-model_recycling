@@ -67,7 +67,7 @@ def eval_model_ckpts(project_name):
     )
 
     pred_result_df = pd.read_csv(
-        settings.DATA_DIR / f"{settings.EXP_ID}_{project_name}_pred_result_nn.csv"
+        settings.DATA_DIR / f"{settings.EXP_ID}_{project_name}_pred_result_nn_all.csv"
     )
     for i in range(len(windows) - settings.C_TEST_WINDOWS):
         RF_result = pred_result_df[pred_result_df["window"] == i].copy()
@@ -133,7 +133,7 @@ def eval_model_ckpts(project_name):
             )
     # *[OUT]: save evaluation result
     evaluation_df.to_csv(
-        settings.DATA_DIR / f"{settings.EXP_ID}_{project_name}_base_eval_nn.csv", index=False
+        settings.DATA_DIR / f"{settings.EXP_ID}_{project_name}_base_eval_nn_all.csv", index=False
     )
     _LOGGER.info(f"Project: {project_name} evaluation result saved")
 
